@@ -1,0 +1,259 @@
+import javax.swing.*;
+import java.awt.*;
+import java.awt.event.*;
+import java.util.Random;
+
+public class ArithmeticGame extends JFrame {
+    private JLabel leftLabel, rightLabel, opLabel, correctLabel, incorrectLabel, commentLabel;
+    private JTextField answerField;
+    private JRadioButton addBtn, subBtn, mulBtn, divBtn, modBtn, level1, level2, level3;
+    private int correct = 0, incorrect = 0, left, right;
+    private char op = '+';
+    private final Random rand = new Random();
+
+    public ArithmeticGame() {
+        setTitle("Arithmetic Game");
+        setSize(950, 600);
+        setLocationRelativeTo(null);
+        setDefaultCloseOperation(EXIT_ON_CLOSE);
+        setLayout(new BorderLayout(10, 10));
+        getContentPane().setBackground(new Color(230, 240, 255));
+
+        // === TITLE ===
+        JLabel title = new JLabel("Practice Your Arithmetic!", SwingConstants.CENTER);
+        title.setFont(new Font("SansSerif", Font.BOLD, 30));
+        title.setForeground(new Color(40, 70, 140));
+        add(title, BorderLayout.NORTH);
+
+        // === RIGHT PANEL: SCORE ===
+        JPanel scorePanel = new JPanel(new GridLayout(2, 2, 5, 5));
+        scorePanel.setBorder(BorderFactory.createTitledBorder(BorderFactory.createLineBorder(new Color(100, 130, 190), 2), "SCORE"));
+        scorePanel.setBackground(Color.WHITE);
+        scorePanel.setPreferredSize(new Dimension(180, 200));
+
+        JLabel correctText = new JLabel("CORRECT", SwingConstants.CENTER);
+        JLabel incorrectText = new JLabel("INCORRECT", SwingConstants.CENTER);
+        correctText.setFont(new Font("SansSerif", Font.BOLD, 16));
+        incorrectText.setFont(new Font("SansSerif", Font.BOLD, 16));
+        correctText.setForeground(new Color(60, 180, 75));
+        incorrectText.setForeground(new Color(200, 60, 60));
+
+        correctLabel = new JLabel("0", SwingConstants.CENTER);
+        incorrectLabel = new JLabel("0", SwingConstants.CENTER);
+        correctLabel.setFont(new Font("SansSerif", Font.BOLD, 18));
+        incorrectLabel.setFont(new Font("SansSerif", Font.BOLD, 18));
+
+        scorePanel.add(correctText);
+        scorePanel.add(incorrectText);
+        scorePanel.add(correctLabel);
+        scorePanel.add(incorrectLabel);
+        add(scorePanel, BorderLayout.EAST);
+
+        // === CENTER PANEL ===
+        JPanel centerPanel = new JPanel();
+        centerPanel.setLayout(new BoxLayout(centerPanel, BoxLayout.Y_AXIS));
+        centerPanel.setBackground(new Color(230, 240, 255));
+
+        // Arithmetic problem
+        JPanel problemPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 15, 20));
+        problemPanel.setBackground(new Color(230, 240, 255));
+
+        leftLabel = makeBoxLabel("56");
+        opLabel = makeBoxLabel("+");
+        rightLabel = makeBoxLabel("46");
+        JLabel eq = makeLabel("=");
+        eq.setFont(new Font("SansSerif", Font.BOLD, 36));
+        eq.setForeground(new Color(40, 70, 140));
+
+        answerField = new JTextField(6);
+        answerField.setFont(new Font("SansSerif", Font.BOLD, 30));
+        answerField.setHorizontalAlignment(JTextField.CENTER);
+        answerField.setBorder(BorderFactory.createLineBorder(new Color(100, 130, 190), 3));
+
+        problemPanel.add(leftLabel);
+        problemPanel.add(opLabel);
+        problemPanel.add(rightLabel);
+        problemPanel.add(eq);
+        problemPanel.add(answerField);
+        centerPanel.add(problemPanel);
+
+        // === COMMENT BOX ===
+        JPanel commentBox = new JPanel(new BorderLayout());
+        commentBox.setBackground(new Color(230, 240, 255));
+        commentBox.setBorder(BorderFactory.createTitledBorder(BorderFactory.createLineBorder(new Color(100, 130, 190), 2), "COMMENT"));
+        commentLabel = new JLabel(" ", SwingConstants.CENTER);
+        commentLabel.setFont(new Font("SansSerif", Font.BOLD, 18)); // Bigger text
+        commentLabel.setForeground(new Color(80, 80, 80));
+        commentBox.add(commentLabel, BorderLayout.CENTER);
+        commentBox.setPreferredSize(new Dimension(400, 55)); // Small but visible
+        centerPanel.add(commentBox);
+
+        // === OPERATION + LEVEL BELOW COMMENT ===
+        JPanel lowerOptions = new JPanel(new GridLayout(1, 2, 10, 10));
+        lowerOptions.setBackground(new Color(230, 240, 255));
+
+        JPanel opPanel = makeRadioPanel("OPERATIONS", new String[]{
+                "ADDITION", "+", "SUBTRACTION", "-", "MULTIPLICATION", "*", "DIVISION", "/", "MODULO", "%"
+        }, e -> generateProblem());
+
+        JPanel lvlPanel = makeRadioPanel("LEVELS", new String[]{
+                "LEVEL 1", "1", "LEVEL 2", "2", "LEVEL 3", "3"
+        }, e -> generateProblem());
+
+        lowerOptions.add(opPanel);
+        lowerOptions.add(lvlPanel);
+        centerPanel.add(lowerOptions);
+
+        // === BUTTONS ===
+        JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 20, 10));
+        buttonPanel.setBackground(new Color(230, 240, 255));
+        JButton submit = makeButton("SUBMIT", new Color(70, 130, 180));
+        JButton next = makeButton("CONTINUE", new Color(60, 180, 75));
+        JButton exit = makeButton("EXIT", new Color(220, 60, 60));
+        buttonPanel.add(submit);
+        buttonPanel.add(next);
+        buttonPanel.add(exit);
+        centerPanel.add(buttonPanel);
+
+        add(centerPanel, BorderLayout.CENTER);
+
+        // === ACTIONS ===
+        submit.addActionListener(e -> checkAnswer());
+        next.addActionListener(e -> generateProblem());
+        exit.addActionListener(e -> System.exit(0));
+
+        generateProblem();
+    }
+
+    private JLabel makeBoxLabel(String text) {
+        JLabel label = new JLabel(text, SwingConstants.CENTER);
+        label.setFont(new Font("SansSerif", Font.BOLD, 50));
+        label.setOpaque(true);
+        label.setBackground(Color.WHITE);
+        label.setBorder(BorderFactory.createLineBorder(new Color(100, 130, 190), 3, true));
+        label.setPreferredSize(new Dimension(100, 80));
+        label.setForeground(new Color(40, 70, 140));
+        return label;
+    }
+
+    private JLabel makeLabel(String text) {
+        JLabel label = new JLabel(text, SwingConstants.CENTER);
+        label.setFont(new Font("SansSerif", Font.BOLD, 36));
+        label.setForeground(new Color(40, 70, 140));
+        return label;
+    }
+
+    private JButton makeButton(String text, Color bg) {
+        JButton btn = new JButton(text);
+        btn.setFont(new Font("SansSerif", Font.BOLD, 18));
+        btn.setBackground(bg);
+        btn.setForeground(Color.WHITE);
+        btn.setFocusPainted(false);
+        btn.setBorder(BorderFactory.createEmptyBorder(10, 20, 10, 20));
+        return btn;
+    }
+
+    private JPanel makeRadioPanel(String title, String[] names, ActionListener listener) {
+        JPanel panel = new JPanel();
+        panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
+        panel.setBorder(BorderFactory.createTitledBorder(BorderFactory.createLineBorder(new Color(100, 130, 190), 2), title));
+        panel.setBackground(Color.WHITE);
+
+        ButtonGroup group = new ButtonGroup();
+        for (int i = 0; i < names.length; i += 2) {
+            JRadioButton b = new JRadioButton(names[i] + " (" + names[i + 1] + ")", i == 0);
+            b.setBackground(Color.WHITE);
+            b.setFont(new Font("SansSerif", Font.PLAIN, 14));
+            b.addActionListener(listener);
+            group.add(b);
+            panel.add(b);
+
+            switch (names[i + 1]) {
+                case "+": addBtn = b; break;
+                case "-": subBtn = b; break;
+                case "*": mulBtn = b; break;
+                case "/": divBtn = b; break;
+                case "%": modBtn = b; break;
+                case "1": level1 = b; break;
+                case "2": level2 = b; break;
+                case "3": level3 = b; break;
+            }
+        }
+        return panel;
+    }
+
+    private void generateProblem() {
+        if (addBtn.isSelected()) op = '+';
+        else if (subBtn.isSelected()) op = '-';
+        else if (mulBtn.isSelected()) op = '*';
+        else if (divBtn.isSelected()) op = '/';
+        else op = '%';
+
+        // ✅ Updated level ranges
+        int[] range = level1.isSelected() ? new int[]{1, 100}
+                : level2.isSelected() ? new int[]{101, 200}
+                : new int[]{201, 300};
+
+        int min = range[0], max = range[1];
+
+        switch (op) {
+            case '+': left = randBetween(min, max); right = randBetween(min, max); break;
+            case '-': left = Math.max(randBetween(min, max), randBetween(min, max)); right = Math.min(randBetween(min, max), randBetween(min, max)); break;
+            case '*': left = randBetween(1, max / 2); right = randBetween(1, 20); break;
+            case '/': right = randBetween(1, 20); int q = randBetween(1, max / Math.max(1, right)); left = right * q; break;
+            case '%': right = randBetween(1, 20); left = randBetween(right, max / 2); break;
+        }
+        leftLabel.setText(String.valueOf(left));
+        rightLabel.setText(String.valueOf(right));
+        opLabel.setText(String.valueOf(op));
+        answerField.setText("");
+        commentLabel.setText(" ");
+        answerField.requestFocus();
+    }
+
+    private int randBetween(int a, int b) {
+        return a + rand.nextInt(b - a + 1);
+    }
+
+    private void checkAnswer() {
+        try {
+            double user = Double.parseDouble(answerField.getText());
+            double correctAns = compute();
+            boolean ok = op == '/' ? Math.abs(user - correctAns) < 0.0001 : Math.abs(user - correctAns) < 0.000001;
+
+            if (ok) {
+                correct++;
+                commentLabel.setText("🎉 Congratulations! Correct!");
+                commentLabel.setForeground(new Color(60, 180, 75));
+            } else {
+                incorrect++;
+                commentLabel.setText("😔 Try again! Answer: " + format(correctAns));
+                commentLabel.setForeground(new Color(200, 60, 60));
+            }
+            correctLabel.setText(String.valueOf(correct));
+            incorrectLabel.setText(String.valueOf(incorrect));
+        } catch (NumberFormatException e) {
+            commentLabel.setText("⚠️ Enter a number!");
+            commentLabel.setForeground(Color.ORANGE);
+        }
+    }
+
+    private double compute() {
+        switch (op) {
+            case '+': return left + right;
+            case '-': return left - right;
+            case '*': return left * right;
+            case '/': return (double) left / right;
+            case '%': return left % right;
+            default: return 0;
+        }
+    }
+
+    private String format(double v) {
+        return v == Math.floor(v) ? String.format("%.0f", v) : String.format("%.4f", v);
+    }
+
+    public static void main(String[] args) {
+        SwingUtilities.invokeLater(() -> new ArithmeticGame().setVisible(true));
+    }
+}
